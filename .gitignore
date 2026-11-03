@@ -1,0 +1,46 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.python-version
+
+# ---- 测试 / 覆盖率 ----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+
+# ---- 本项目运行产物 ----
+# 转换输出默认落在 out/ 与你指定的路径；打包分发时不要带上个人文章
+out/
+*.report.json
+!examples/sample_report.json
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 个人草稿（本地保留，不入库）----
+drafts/
+private/
+*.local.md
+
+# ---- 生成的预览页（由 tools/render_readme.py 产出）----
+docs/readme_preview.html
+
+# ---- 核验脚本的留档输出（每次运行重新生成）----
+tests/verify_official_quotes_output.txt
