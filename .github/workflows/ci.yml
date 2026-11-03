@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------- 契约层
+  # 不装任何第三方依赖，验证 README 里"零依赖 clone 下来就能跑"这句话。
+  smoke:
+    name: smoke / ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: 环境信息（失败时用来判断是环境问题还是代码问题）
+        run: |
+          python -V
+          python -c "import sys; print(sys.executable)"
+
+      - name: 冒烟测试（契约级，8 项）
+        run: python tests/test_smoke.py -v
+
+      - name: 能力自检（干净环境基线 18/20；掉的 2 项是缺参照物，非失败）
+        run: python scripts/selftest.py
+
+      - name: 样例转换（--strict：合规自检有硬错误就以非 0 退出）
+        run: python scripts/convert_to_wechat.py examples/sample_article.md out.html --theme accent --toc --strict
+
+      - name: 独立跑一遍合规检查（有硬错误则退出码非 0，这一步会红）
+        run: python scripts/wechat_check.py out.html
+
+  # ---------------------------------------------------------------- 满依赖层
+  # 装上可选依赖，验证"装了库走库路径、且与零依赖路径字节一致"这条断言。
+  full-deps:
+    name: full-deps / ubuntu / py3.12
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装可选依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install markdown beautifulsoup4 python-docx
+
+      - name: 能力自检（满依赖应 20/20）
+        run: python scripts/selftest.py
+
+      - name: 冒烟测试（满依赖环境同样应 8/8）
+        run: python tests/test_smoke.py
+
+  # ---------------------------------------------------------------- 依据核验
+  # 联网复核官方原文是否还在页面上。抓不到网时脚本会打印 SKIP 并失败退出，
+  # 这样"没核验"不会被误读成"核验通过"。
+  evidence:
+    name: evidence / 官方原文核验
+    runs-on: ubuntu-latest
+    continue-on-error: true # 官方站点偶发 403/超时不应让整个 CI 变红；但结果会显示
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 核验 10 条官方原文 + "100 张"断言回归护栏
+        run: python tests/verify_official_quotes.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: official-quotes-verification
+          path: tests/verify_official_quotes_output.txt
+          if-no-files-found: warn
