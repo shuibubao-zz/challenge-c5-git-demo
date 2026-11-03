@@ -1,0 +1,24 @@
+{
+  "source": "examples\\sample_article.md",
+  "output": "examples\\sample_output.html",
+  "engine": "lite(零依赖)",
+  "theme": "accent",
+  "warnings": [],
+  "check": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "正文含 1 个外链 —— 公众号正文通常不允许跳转外部域名，建议把链接放到「阅读原文」或文末"
+    ],
+    "stats": {
+      "chars": 553,
+      "images": 1,
+      "h2": 7,
+      "h3": 0,
+      "p": 17,
+      "tables": 1,
+      "links": 1,
+      "code_blocks": 5
+    }
+  }
+}
